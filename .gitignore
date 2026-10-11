@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+data/*.csv
+data/nltk_data/
+models/*.pkl
+results/*.csv
+results/*.txt
+uploads/*
+!uploads/.gitkeep
