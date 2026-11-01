@@ -105,12 +105,17 @@ async function openDetails(detailId) {
     const match = details.matching;
     const projectText = match.project_score === null ? 'Project relevance: N/A (no projects detected; available components were reweighted).'
       : `Project relevance: ${percent(details.project_score)}.`;
-    detailsSummary.textContent = `Suggested role: ${details.suggested_role}. Overall match: ${percent(details.match_score)}. Skill capability match: ${percent(match.skill_score)}. ${projectText} Semantic similarity: ${percent(match.semantic_similarity)}. Critical requirement coverage: ${percent(match.critical_coverage)}. Evidence strength: ${percent(match.evidence_strength)}.`;
+    const criticalCoverage = match.critical_coverage === null ? 'N/A (no critical requirements)' : percent(match.critical_coverage);
+    detailsSummary.textContent = `Suggested role: ${details.suggested_role}. Overall match: ${percent(details.match_score)}. Skill capability match: ${percent(match.skill_score)}. ${projectText} Semantic similarity: ${percent(match.semantic_similarity)}. Critical requirement coverage: ${criticalCoverage}. Evidence strength: ${percent(match.evidence_strength)}.`;
     const matched = match.matched_skills.length ? match.matched_skills.join(', ') : 'no direct required skills';
     const strongest = details.project_analysis[0];
+    const missingCritical = match.requirements
+      .filter(requirement => requirement.critical && !requirement.match_strength)
+      .map(requirement => requirement.skill);
+    const criticalNote = missingCritical.length ? ` Missing critical requirement: ${missingCritical.join(', ')}.` : '';
     detailsExplanation.textContent = strongest
-      ? `Strongest project: ${strongest.title} (${percent(strongest.relevance_score)}). The strongest direct evidence is ${matched}.`
-      : `The strongest direct evidence is ${matched}. Add project details to demonstrate these skills.`;
+      ? `Strongest project: ${strongest.title} (${percent(strongest.relevance_score)}). The strongest direct evidence is ${matched}.${criticalNote}`
+      : `The strongest direct evidence is ${matched}.${criticalNote} Add project details to demonstrate these skills.`;
     const partial = match.related_skills.length
       ? match.related_skills.map(item => `${item.resume_skills.join(', ')} → ${item.required_skill}`).join('; ')
       : 'None';
@@ -162,8 +167,17 @@ form.addEventListener('submit', async event => {
       node.querySelector('.category').textContent = `Suggested role: ${candidate.suggested_role}`;
       const projectText = candidate.matching.project_score === null ? 'No projects detected.'
         : `Project relevance: ${percent(candidate.matching.project_score)}.`;
-      node.querySelector('.similarity').textContent = `Overall match: ${percent(candidate.matching.overall_score)} · Skill capability: ${percent(candidate.matching.skill_score)} · ${projectText} Semantic similarity: ${percent(candidate.matching.semantic_similarity)} · Critical coverage: ${percent(candidate.matching.critical_coverage)}.`;
-      node.querySelector('.relevance').textContent = `${candidate.matching.recommendation}: ${candidate.matching.matched_skills.length ? `demonstrates ${candidate.matching.matched_skills.join(', ')}` : 'does not demonstrate direct required skills'}.`;
+      const criticalCoverage = candidate.matching.critical_coverage === null ? 'N/A' : percent(candidate.matching.critical_coverage);
+      node.querySelector('.similarity').textContent = `Overall match: ${percent(candidate.matching.overall_score)} · Skill capability: ${percent(candidate.matching.skill_score)} · ${projectText} Semantic similarity: ${percent(candidate.matching.semantic_similarity)} · Critical coverage: ${criticalCoverage}.`;
+      const matchedSkills = candidate.matching.matched_skills;
+      const missingCritical = candidate.matching.requirements
+        .filter(requirement => requirement.critical && !requirement.match_strength)
+        .map(requirement => requirement.skill);
+      const evidenceSummary = matchedSkills.length
+        ? `demonstrates ${matchedSkills.join(', ')}`
+        : 'does not demonstrate direct required skills';
+      const criticalSummary = missingCritical.length ? ` Missing critical requirement: ${missingCritical.join(', ')}.` : '';
+      node.querySelector('.relevance').textContent = `${candidate.matching.recommendation}: ${evidenceSummary}.${criticalSummary}`;
       node.querySelector('.details-button').addEventListener('click', () => openDetails(candidate.detail_id));
       cards.append(node);
     });

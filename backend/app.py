@@ -136,8 +136,8 @@ def analyze():
                 detail_id = uuid4().hex
                 details_by_id[detail_id] = {"candidate": candidate_info["name"], "email": candidate_info["email"],
                                          "resume_text": record["text"],
-                                         "suggested_role": jd["role"], "role_confidence": jd["role_confidence"],
-                                         "role_evidence": jd["role_evidence"], "match_score": match["overall_score"],
+                                         "suggested_role": classified["category"], "role_confidence": classified["confidence"],
+                                         "role_evidence": [], "match_score": match["overall_score"],
                                          "matching": match, "project_analysis": match["projects"],
                                          "project_score": match["project_score"], "semantic_similarity": match["semantic_similarity"],
                                          "text_similarity": match["semantic_similarity"], "semantic_method": match["semantic_method"],
@@ -146,7 +146,7 @@ def analyze():
                 if debug_mode:
                     details_by_id[detail_id]["debug"] = match["debug"]
                 output.append({"candidate": candidate_info["name"], "detail_id": detail_id, "classification": classified,
-                           "suggested_role": jd["role"], "role_confidence": jd["role_confidence"],
+                           "suggested_role": classified["category"], "role_confidence": classified["confidence"],
                            "matching": {**match, "tfidf_similarity": match["semantic_similarity"],
                                         "relevant": match["overall_score"] >= 0.70, "shared_keywords": keywords}})
             except Exception as error:

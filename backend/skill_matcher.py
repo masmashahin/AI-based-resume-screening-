@@ -9,6 +9,7 @@ SKILL_PATTERNS = {
     "Python": (r"\bpython\b",),
     "Java": (r"\bjava\b",),
     "SQL": (r"\bsql\b",),
+    "JSON": (r"\bjson\b", r"\bjavascript object notation\b"),
     "HTML": (r"\bhtml\b",),
     "CSS": (r"\bcss\b",),
     "Flask": (r"\bflask\b",),
@@ -38,6 +39,8 @@ SKILL_PATTERNS = {
     "Angular": (r"\bangular\b",),
     "Data Structures": (r"\bdata structures?\b",),
     "Object-Oriented Programming": (r"\bobject[- ]oriented programming\b", r"\boop\b"),
+    "Unit Testing": (r"\bunit tests?\b", r"\bunit testing\b", r"\bpytest\b", r"\btesting\b"),
+    "Debugging": (r"\bdebug(?:ging|ged)?\b",),
     "C++": (r"\bc\+\+\b",),
     "C#": (r"\bc#\b", r"\bc sharp\b"),
     "OpenCV": (r"\bopencv\b",),
@@ -52,6 +55,7 @@ _CATEGORIES = {
     "Python": "Programming language", "Java": "Programming language", "C++": "Programming language",
     "C#": "Programming language", "JavaScript": "Programming language", "TypeScript": "Programming language",
     "MySQL": "Database", "PostgreSQL": "Database", "MongoDB": "Database", "SQL": "Database",
+    "JSON": "Data format",
     "Flask": "Backend framework", "Django": "Backend framework", "FastAPI": "Backend framework",
     "Node.js": "Backend framework", "Spring Boot": "Backend framework", "REST APIs": "Backend capability",
     "React": "Frontend framework", "Angular": "Frontend framework", "HTML": "Frontend technology", "CSS": "Frontend technology",
@@ -60,10 +64,14 @@ _CATEGORIES = {
     "BERT": "NLP", "TF-IDF": "Text representation", "Cosine Similarity": "Text similarity",
     "scikit-learn": "Machine learning library", "Pandas": "Data analysis", "NumPy": "Data analysis",
     "Docker": "DevOps", "AWS": "Cloud", "Git": "Tooling", "GitHub": "Tooling",
+    "Unit Testing": "Quality assurance", "Debugging": "Quality assurance",
 }
 _ALIASES = {"REST APIs": ("rest api", "restful api"), "Node.js": ("node.js", "nodejs"),
             "Sentence Transformers": ("sentence transformers", "sentence transformer", "sentence-bert", "sbert"),
-            "scikit-learn": ("scikit-learn", "sklearn"), "C#": ("c#", "c sharp")}
+            "scikit-learn": ("scikit-learn", "sklearn"), "C#": ("c#", "c sharp"),
+            "JSON": ("json", "javascript object notation"),
+            "Unit Testing": ("unit test", "unit testing", "pytest", "testing"),
+            "Debugging": ("debugging", "debugged", "debug")}
 SKILL_METADATA = {skill: {"category": _CATEGORIES.get(skill, "Technology"),
                           "aliases": _ALIASES.get(skill, (skill.lower(),))}
                   for skill in SKILL_PATTERNS}

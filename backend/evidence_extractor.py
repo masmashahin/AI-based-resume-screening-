@@ -13,14 +13,42 @@ SECTION_PATTERNS = {
 }
 
 
+def _is_non_evidence_context(skill: str, sentence: str, start: int, end: int) -> bool:
+    """Return whether this *individual* skill mention is not candidate evidence."""
+    before, after = sentence[:start], sentence[end:]
+    # A contrast after a negative statement can still contain a positive skill:
+    # "No Python, but experienced in SQL" must retain SQL.
+    local_before = re.split(r"\b(?:but|however|whereas)\b|;", before)[-1]
+    negative_before = r"\b(?:no|without|lack(?:s|ing)?|never)\b[^.\n]{0,160}$"
+    negated_before = r"\b(?:do|does|did|have|has|had|is|are|was|were)\s+not\b[^.\n]{0,160}$"
+    if re.search(negative_before, local_before) or re.search(negated_before, local_before):
+        return True
+    if re.search(r"\b(?:rather than|instead of|unlike)\s*$", local_before):
+        return True
+    if re.search(r"^\s+(?:is|was|are|were)\s+not\b[^.\n]{0,45}", after):
+        return True
+    if re.search(r"^\s+(?:is|was|are|were)\s+(?:required|preferred|mandatory|essential)\b", after):
+        return True
+    if re.search(r"\b(?:looking|want(?:s)?|hope|plan(?:s|ning)?|aspir(?:e|ing)|interested)\b[^.\n]{0,35}\blearn(?:ing)?\b[^.\n]{0,25}$", local_before):
+        return True
+    if re.search(r"\b(?:job|role|position|requirement)s?\s*[:\-][^.\n]*$", before):
+        return True
+    return False
+
+
 def _has_affirmative_mention(skill: str, text: str) -> bool:
-    """Do not treat statements such as 'no demonstrated BERT' as evidence."""
+    """Keep demonstrated mentions while excluding negative or requirement-only ones."""
     lower = text.lower()
     for pattern in SKILL_PATTERNS[skill]:
         for match in re.finditer(pattern, lower):
-            sentence_start = max(lower.rfind(".", 0, match.start()), lower.rfind("\n", 0, match.start())) + 1
-            lead = lower[sentence_start:match.start()]
-            if not re.search(r"\b(?:no|without|lacks?|not)\b", lead):
+            sentence_start = max(lower.rfind(".", 0, match.start()), lower.rfind("!", 0, match.start()),
+                                 lower.rfind("?", 0, match.start()), lower.rfind("\n", 0, match.start())) + 1
+            sentence_end = min((boundary for boundary in (lower.find(".", match.end()), lower.find("!", match.end()),
+                                                           lower.find("?", match.end()), lower.find("\n", match.end()))
+                                if boundary >= 0), default=len(lower))
+            sentence = lower[sentence_start:sentence_end]
+            start, end = match.start() - sentence_start, match.end() - sentence_start
+            if not _is_non_evidence_context(skill, sentence, start, end):
                 return True
     return False
 
@@ -45,6 +73,10 @@ def extract_resume_evidence(resume_text: str) -> dict:
                 continue
             entries.append({"skill": skill, "source": source, "context": text[:300], "project_name": None})
     for project in projects:
+        # Project text is also consumed by the project scorer, so remove the
+        # same non-evidence mentions before any score can use them.
+        project["skills"] = [skill for skill in project["skills"]
+                             if _has_affirmative_mention(skill, project["text"])]
         for skill in project["skills"]:
             entries.append({"skill": skill, "source": "project", "context": project["description"],
                             "project_name": project["title"]})
